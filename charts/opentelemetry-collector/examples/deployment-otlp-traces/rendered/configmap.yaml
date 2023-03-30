@@ -3,27 +3,26 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: example-opentelemetry-collector
+  name: opentelemetry-collector
   labels:
     helm.sh/chart: opentelemetry-collector-0.51.2
     app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: demo
     app.kubernetes.io/version: "0.74.0"
     app.kubernetes.io/managed-by: Helm
 data:
   relay: |
     exporters:
-      logging: {}
-    extensions:
-      health_check: {}
-      memory_ballast:
-        size_in_percentage: 40
+      logging:
+        loglevel: debug
+      otlphttp:
+        endpoint: # confidential (elasticsearch apm url)
+        tls:
+          insecure: true
     processors:
-      batch: {}
       memory_limiter:
         check_interval: 5s
-        limit_percentage: 80
-        spike_limit_percentage: 25
+        limit_mib: 2000
     receivers:
       otlp:
         protocols:
@@ -32,18 +31,13 @@ data:
           http:
             endpoint: ${MY_POD_IP}:4318
     service:
-      extensions:
-      - health_check
-      - memory_ballast
       pipelines:
+        logs:
+          receivers: [otlp]
+          exporters: [logging, otlphttp]
         traces:
-          exporters:
-          - logging
-          processors:
-          - memory_limiter
-          - batch
-          receivers:
-          - otlp
-      telemetry:
+          receivers: [otlp]
+          exporters: [logging, otlphttp]
         metrics:
-          address: ${MY_POD_IP}:8888
+          receivers: [otlp]
+          exporters: [logging, otlphttp]
