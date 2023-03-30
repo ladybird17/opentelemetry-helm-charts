@@ -16,7 +16,7 @@ data:
       logging:
         loglevel: debug
       otlphttp:
-        endpoint: # confidential (elasticsearch apm url)
+        endpoint: http://my-apm-apm-server:8200
         tls:
           insecure: true
     processors:
